@@ -21,10 +21,6 @@ app.get("/api/notes", (req, res) => {
   res.json(allNotes.slice(1));
 });
 
-app.get("/api/notes", (req, res) => {
-  res.json(allNotes.slice(1));
-});
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "./public/index.html"));
 });
@@ -63,7 +59,7 @@ function deleteNote(id, notesArray) {
   for (let i = 0; i < notesArray.length; i++) {
     let note = notesArray[i];
 
-    if (note.id === id) {
+    if (note.id == id) {
       notesArray.splice(i, 1);
       fs.writeFileSync(
         path.join(__dirname, "./db/db.json"),
