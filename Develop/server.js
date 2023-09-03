@@ -1,82 +1,79 @@
-// Import Express.js
-const express = require("express");
-
+//Import Express.js
 // Import built-in Node.js package 'path' to resolve path of files that are located on the server
+// Specify on which port the Express.js server will run
+// Initialize an instance of Express.js
+const express = require("express");
 const path = require("path");
 const fs = require("fs");
 
-// Initialize an instance of Express.js
 const app = express();
+const PORT = process.env.PORT || 3001;
 
-// Specify on which port the Express.js server will run
-const PORT = 3001;
+const allNotes = require("./db/db.json");
 
 // Static middleware pointing to the public folder
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
 app.use(express.static("public"));
 
 // GET request for Notes
 app.get("/api/notes", (req, res) => {
-  // Send a message to the client
-  res.json(`${req.method} request received to get notes`);
-
-  // Log our request to the terminal
-  console.info(`${req.method} request received to get notes`);
+  res.json(allNotes.slice(1));
 });
 
-// POST request to add a notes
+app.get("/api/notes", (req, res) => {
+  res.json(allNotes.slice(1));
+});
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/index.html"));
+});
+
+app.get("/notes", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/notes.html"));
+});
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "./public/index.html"));
+});
+
+function createNewNote(body, notesArray) {
+  const newNote = body;
+  if (!Array.isArray(notesArray)) notesArray = [];
+
+  if (notesArray.length === 0) notesArray.push(0);
+
+  body.id = notesArray[0];
+  notesArray[0]++;
+
+  notesArray.push(newNote);
+  fs.writeFileSync(
+    path.join(__dirname, "./db/db.json"),
+    JSON.stringify(notesArray, null, 2)
+  );
+  return newNote;
+}
+
 app.post("/api/notes", (req, res) => {
-  // Log that a POST request was received
-  console.info(`${req.method} request received to add a notes`);
-
-  // Destructuring assignment for the items in req.body
-  const { title, text } = req.body;
-
-  // If all the required properties are present
-  if (tittle && txt) {
-    // Variable for the object we will save
-    const newNotes = {
-      title,
-      text,
-    };
-
-    // Convert the data to a string so we can save it
-    const notesString = JSON.stringify(newNotes);
-
-    // Obtain existing notes
-    fs.readFile("./db/notes.json", "utf8", (err, data) => {
-      if (err) {
-        console.error(err);
-      } else {
-        // Convert string into JSON object
-        const parsednotes = JSON.parse(data);
-
-        // Add a new review
-        parsedNotes.push(newNotes);
-
-        // Write the string to a file
-        fs.writeFile(
-          "./db/notes.json",
-          JSON.stringify(parsedNotes, null, 4),
-          (writeErr) =>
-            writeErr
-              ? console.error(writeErr)
-              : console.info("Successfully updated notes!")
-        );
-      }
-    });
-
-    const response = {
-      status: "saved",
-      body: newNotes,
-    };
-
-    console.log(response);
-    res.status(201).json(response);
-  } else {
-    res.status(500).json("Error in posting notes");
-  }
+  const newNote = createNewNote(req.body, allNotes);
+  res.json(newNote);
 });
 
-app.listen(PORT, () =>
-  console.log(`App listening at http://localhost:${PORT}`)
-);
+function deleteNote(id, notesArray) {
+  for (let i = 0; i < notesArray.length; i++) {
+    let note = notesArray[i];
+
+    if (note.id === id) {
+      notesArray.splice(i, 1);
+      fs.writeFileSync(
+        path.join(__dirname, "./db/db.json"),
+        JSON.stringify(notesArray, null, 2)
+      );
+
+      break;
+    }
+  }
+}
+app.listen(PORT, () => {
+  console.log(`App listening at http://localhost:${PORT}`);
+});
